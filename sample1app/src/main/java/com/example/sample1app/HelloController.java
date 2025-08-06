@@ -11,13 +11,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.example.sample1app.repositories.PersonRepository;
 
-import jakarta.transaction.Transactional;
 import jakarta.annotation.PostConstruct;
-import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 
 
 @Controller
@@ -26,6 +27,9 @@ public class HelloController {
   @Autowired
   PersonRepository repository;
 
+  @Autowired
+  PersonDAOPersonImpl dao;
+
   @RequestMapping("/")
   public ModelAndView index(
       @ModelAttribute("formModel") Person Person,
@@ -33,7 +37,8 @@ public class HelloController {
     mav.setViewName("index");
     mav.addObject("title", "Hello page");
     mav.addObject("msg","this is JPA sample data.");
-    List<Person> list = repository.findAll();
+    // List<Person> list = repository.findAll();
+    List<Person> list = repository.findAllOrderByName();
     mav.addObject("data",list);
     return mav;
   }
@@ -59,6 +64,16 @@ public class HelloController {
     }
     return res;
   }
+  
+  @RequestMapping(value = "/find", method=RequestMethod.GET)
+  public ModelAndView index(ModelAndView mav) {
+      mav.setViewName("find"); 
+      mav.addObject("msg", "Personのサンプルです");
+      Iterable<Person> list = dao.getAll();
+      mav.addObject("data", list);
+      return mav;
+  }
+  
 
   @RequestMapping(value = "/edit/{id}", method=RequestMethod.GET)
   public ModelAndView edit(@ModelAttribute Person Person,
@@ -92,6 +107,23 @@ public class HelloController {
   public ModelAndView remove(@RequestParam long id, ModelAndView mav) {
     repository.deleteById(id);
     return new ModelAndView("redirect:/");
+  }
+
+  @RequestMapping(value = "/find", method = RequestMethod.POST)
+  public ModelAndView search(HttpServletRequest request, ModelAndView mav) {
+    mav.setViewName("find");
+    String param = request.getParameter("find_str");
+    if(param == "") {
+      mav = new ModelAndView("redirect:/find");
+    } else {
+      mav.addObject("title", "find result");
+      mav.addObject("msg", "「" + param + "」の検索結果");
+      mav.addObject("value", param);
+      List<Person> list = dao.find(param);
+      mav.addObject("data", list);
+    }
+
+    return mav;
   }
 
   
