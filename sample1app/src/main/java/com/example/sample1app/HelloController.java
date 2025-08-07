@@ -30,6 +30,15 @@ public class HelloController {
   @Autowired
   PersonDAOPersonImpl dao;
 
+  @Autowired
+  Post post;
+
+  @Autowired
+  SampleComponent component;
+
+  @Autowired
+  SampleService service;
+
   @RequestMapping("/")
   public ModelAndView index(
       @ModelAttribute("formModel") Person Person,
@@ -126,8 +135,27 @@ public class HelloController {
     return mav;
   }
 
-  
-  
+  @RequestMapping("/bean")
+  public ModelAndView bean(ModelAndView mav) {
+    mav.setViewName("bean");
+    mav.addObject("title","Bean sample");
+    mav.addObject("msg", component.message());
+    mav.addObject("data", service.getLocalPosts());
+    return mav;
+  }
+
+  @RequestMapping(value="/bean", method = RequestMethod.POST)
+  public ModelAndView bean(HttpServletRequest request,
+      ModelAndView mav) {
+    String param = request.getParameter("find_str");
+    mav.setViewName("bean");
+    mav.addObject("title", "Bean sample");
+    mav.addObject("msg", "get id = " + param);
+    Post post = service.getAndSavePost(Integer.parseInt(param));
+    mav.addObject("data", new Post[]{post});
+    return mav;
+  }
+
 
   @PostConstruct
   public void init(){
